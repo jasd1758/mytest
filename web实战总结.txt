@@ -1,0 +1,1876 @@
+Java  开发大型实战技术
+
+1: 新建一个javaWeb项目
+
+2: 建立静态页面
+
+3: 编写后台业务逻辑
+
+4: 链接数据库---打通前后台---实现动态化
+
+5: 测试----内部测试----公用测试(目标用户参与测试) 找bug
+
+6: 上线试运行--模拟正式的服务器环境  找bug
+
+7: 正式上线运营(根据用户反馈来维护或者修改)
+
+8: 维护
+
+-------------------------------------------------------
+
+                     SSM-Spring-SpringMVC-MyBatis
+
+1:整合Spring--Mybatis
+
+Spring永远是老大用来控制他们
+
+弄好jar包-----Spring和Mybatis的jar包
+
+2:创建表和实体类
+
+表和类的属性要一一对应 
+
+类是学生类student.class
+
+
+3: Mybatis 配置文件 conf.xml (数据源,mapper.xml)
+
+可以省略,将该文件的全部配置交给spring.xml来管理
+
+4: 创建spring篇日志文件 applicationContext.xml
+
+
+5: 通过mapper.xml和SudentMapper.java这个类进行映射，把表和映射文件关联起来
+
+
+6: 为了让spring认识你  lib 里面的web.xml 系统配置里写入
+
+	<!-- web项目中 ，引入Spring -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+7: 	<!-- 这是配置数据库的信息-替代mayatis的配置文件conf.xml -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+
+		<property name="driverClassName" values="${driver}"></property>
+		<property name=" url" value="${url}"></property>
+		<property name="username" value="${username}"></property>
+		<property name=" password" value="${password}"></property>
+
+	</bean>
+
+
+8: 为了让mapper识别加载mapper文件
+
+ 	<bean id="sqlSesionFactory " class="org.mybatis.spring.SqlSessionFactoryBean">
+
+		<!-- 加载 mybatis 配置文件 -->
+		<property name="dataSource" ref="dataSource"></property>
+
+		<!-- 加载mapper.xml路径 记住这里的路径不用点 -->
+		<property name="mapperLocations" value="it/com/mapper/*.xml"></property>
+
+	</bean>
+
+9: <!-- 加载属性文件 db.properties文件 属性信息都在文件里 -->
+	<bean id="config"
+		class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+
+		<property name="locations">
+			<array>
+				<value>classpath:db.properties</value>
+			</array>
+
+		</property>
+
+	</bean>
+
+10: 准备工作做完了,用扫描包的形式整个spring和mybatis
+
+
+<!-- 配置Mybatis需要的核心类:sqlSessionFactory -->
+	<!-- 在SpringIOC 容器中 创建Mybatis的核心类 SqlSesionFactory -->
+	<bean id="sqlSesionFactory " class="org.mybatis.spring.SqlSessionFactoryBean">
+
+		<!-- 加载 mybatis 配置文件 -->
+		<property name="dataSource" ref="dataSource"></property>
+
+		<!-- 加载mapper.xml路径 记住这里的路径不用点 -->
+		<property name="mapperLocations" value="it/com/mapper/*.xml"></property>
+
+	</bean>
+
+	<!-- Spring整合mybatis的sqlSessionFactory 交给Spring来管理 -->
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		<!-- 指定批量产生哪个包中的mapper对象 -->
+		<property name="basePackage" value="it.com.mapper"></property>
+
+		<!-- 上面basePackage 所在的property的作用: it.net.mapper包中,所有的接口 产生与之对应的动态代理对象 
+			(对象名 就是首字母小写的接口名字) 然后使用studentMapper.() 进行增删改查就可以 -->
+
+	</bean>
+
+
+11: 上面已经将Spring和Mybatis整合完了,继续整合SpringMVC，就是将
+Springmvc加入项目即可
+
+jar 包啪啪的扔项目里....
+
+
+配置MVC第一步在web.xml里添加springmvc
+
+<!-- web项目中,整合SpringMVC支持 -->
+	<servlet>
+		<servlet-name>springDispatcherServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:context_controller.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>springDispatcherServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+
+12:配置mvc文件applicationContext-controller.xml
+
+	<!-- 配置视图解析器 -->
+	<bean id=""
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+
+		<!-- 然后搭配前缀和后缀属性 -->
+		<property name="prefix" value="/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+
+	</bean>
+
+13:
+<!-- SpringMVC 标准配置 必须添加 早晚要用 -->
+	<mvc:annotation-driven></mvc:annotation-driven>
+
+
+14:  上面这些已经基本搭建完成SSM框架了,已经具备操作三层创建基础项目了，如果需要更多额外功能支持在添加就好
+
+
+15: 小三层框架搭建并测试下
+
+创建service 并搭建基础类接口   和实现类
+
+
+创建控制器类StudentController  并添加注解@Controller
+
+@RequestMapping("controller")
+@Controller
+public class StudentController {
+
+}
+
+使其成为控制器类,并可以被MVC扫描
+
+  <!-- 将控制器controller所在的包加载到springIOC容器里 -->
+
+  最好在mvc配置文件controller.xml里添加
+
+	<!-- 将控制器controller所在的包加载到springIOC容器里 -->
+	<context:component-scan base-package="it.com.controller.StudentController"></context:component-scan>
+
+
+16: 测试查询一个 用index.jsp 就好
+
+<a  href="controller/queryStudentById">超级神器1号学生</a>
+
+
+Mybatis已经帮你把dao实现类写好了,只要写service就好
+
+ 
+17: 填写service类的方法 并在实现类重写方法
+
+因为依赖注入 依靠set方法生成此方法
+	// 不需要new
+	private StudentMapper studentMapper;
+
+	public void setStudentMapper(StudentMapper studentMapper) {
+		this.studentMapper = studentMapper;
+	}
+
+在spring容器 <!-- 依赖注入: 给service注入dao 相当于new-->
+
+	<bean id="studentService" class="it.com.service.StudentServiceImpl">
+		<property name="studentMapper" ref="studentMapper"></property>
+	</bean>
+
+
+	// 这是service依赖dao
+	public Student queryStudentById(int id) {
+
+		return studentMapper.queryStudentById(id);
+	}
+
+
+18:因为控制器类依赖service 上层依赖于下层
+
+	// 控制器依赖于servcice
+	private StudentService studentService;
+
+	public void setStudentService(StudentService studentService) {
+		this.studentService = studentService;
+	}
+
+然后spring容器继续注入这个属性  记得依赖service用ref链接
+
+	<!-- 依赖注入: 给controller注入service -->
+	<bean id="studentController" class="it.com.controller.StudentController">
+		<property name="studentService" ref="studentService"></property>
+	</bean>
+
+
+19:在控制器类完善 用map把学生传到request域里然后测试一下
+
+	@RequestMapping("queryStudentById/{id}")
+	public String queryStudentById(@PathVariable("id") Integer id,
+			Map<String, Object> map) {
+
+		// 用map把学生传到request域里
+		Student student = studentService.queryStudentById(id);
+
+		map.put("student", student);
+
+		return "result"; // 显示一个result页面
+
+	}
+
+
+20: 创建一个result.jsp
+
+------------------------------------------------------------
+
+
+                   项目 : 网上书城
+
+1:搭建环境   ---导入原型
+
+用户模块
+
+分类模块
+
+图书模块
+
+购物车模块
+
+订单模块
+
+2:功能分析
+
+前台
+
+   用户模块:
+     
+      注册
+
+      激活
+
+      登陆
+
+      退出
+
+   分类模块:
+        
+      查看所有分类
+    
+   图书模块:
+     
+      查询所有图书
+
+      按分类查询
+
+      查询图书详细（按ID查）
+
+   购物车模块:
+
+      添加一条物品条目
+      
+      情况所有物品条目
+     
+      删除指定物品条目
+
+      我的购物车(按用户查询)
+
+    订单模块:
+ 
+      生成订单:
+
+      我的订单: 按用户查询订单
+
+      按ID查询订单 ---点击付款
+
+      确认收货
+
+      付款功能--跳转到银行页面
+
+      付款回调功能--由银行来调用我们这个方法，表示用户已经付款成功
+      
+      (在线支付相关)
+    
+   
+后台:--有很多扩张功能
+
+    管理员
+    
+      登陆功能
+
+      分类管理    
+          
+          添加分类
+
+          查看分类
+
+          按ID查询
+          修改分类
+
+    图书管理
+    
+        查看所有图书
+
+            按ID查询
+
+            删除图书
+      
+            修改图书
+
+            上传图书 --(图片和信息)
+
+     订单管理
+
+         查询所有订单
+
+         按状态查询订单
+
+         发货
+
+        
+3: 框架搭建 
+
+A: 添加需要的jar
+   
+mysql  
+
+c3p0
+
+dbutils
+
+itcast-tools---commons.beanutils  --- commons.logging
+
+javamail---  mail.jar  -- activation.jar
+
+上传需要的jar  ---commons.fileupload---commons.io
+
+Ajax---  json.lib
+
+B: 创建package
+
+C: 重要的数据库表    
+
+
+4: 用户模块:
+
+   用户模块的相当类
+
+   功能填充  ---
+
+   用户注册
+
+   用户激活
+
+   用户登陆 
+
+   用户退出
+
+   
+----------------------------------------------------
+
+一、MySQL的数据类型
+主要包括以下五大类：
+
+整数类型：BIT、BOOL、TINY INT、SMALL INT、MEDIUM INT、 INT、 BIG INT
+
+浮点数类型：FLOAT、DOUBLE、DECIMAL
+
+字符串类型：CHAR、VARCHAR、TINY TEXT、TEXT、MEDIUM TEXT、LONGTEXT、TINY BLOB、BLOB、MEDIUM BLOB、LONG BLOB
+
+日期类型：Date、DateTime、TimeStamp、Time、Year
+
+其他数据类型：BINARY、VARBINARY、ENUM、SET、Geometry、Point、MultiPoint、LineString、MultiLineString、Polygon、GeometryCollection等
+
+ 
+
+1、整型
+
+MySQL数据类型	含义（有符号）
+tinyint(m)	1个字节  范围(-128~127)
+smallint(m)	2个字节  范围(-32768~32767)
+mediumint(m)	3个字节  范围(-8388608~8388607)
+int(m)	4个字节  范围(-2147483648~2147483647)
+bigint(m)	8个字节  范围(+-9.22*10的18次方)
+取值范围如果加了unsigned，则最大值翻倍，如tinyint unsigned的取值范围为(0~256)。
+
+ int(m)里的m是表示SELECT查询结果集中的显示宽度，并不影响实际的取值范围，没有影响到显示的宽度，不知道这个m有什么用。
+
+ 
+
+2、浮点型(float和double)
+
+MySQL数据类型	含义
+float(m,d)	单精度浮点型    8位精度(4字节)     m总个数，d小数位
+double(m,d)	双精度浮点型    16位精度(8字节)    m总个数，d小数位
+设一个字段定义为float(6,3)，如果插入一个数123.45678,实际数据库里存的是123.457，但总个数还以实际为准，即6位。整数部分最大是3位，如果插入数12.123456，存储的是12.1234，如果插入12.12，存储的是12.1200.
+
+ 
+
+3、定点数
+
+浮点型在数据库中存放的是近似值，而定点类型在数据库中存放的是精确值。 
+
+decimal(m,d) 参数m<65 是总个数，d<30且 d<m 是小数位。
+
+ 
+
+4、字符串(char,varchar,_text)
+
+MySQL数据类型	含义
+char(n)	固定长度，最多255个字符
+varchar(n)	固定长度，最多65535个字符
+tinytext	可变长度，最多255个字符
+text	可变长度，最多65535个字符
+mediumtext	可变长度，最多2的24次方-1个字符
+longtext	可变长度，最多2的32次方-1个字符
+char和varchar：
+
+1.char(n) 若存入字符数小于n，则以空格补于其后，查询之时再将空格去掉。所以char类型存储的字符串末尾不能有空格，varchar不限于此。 
+
+2.char(n) 固定长度，char(4)不管是存入几个字符，都将占用4个字节，varchar是存入的实际字符数+1个字节（n<=255）或2个字节(n>255)，
+
+所以varchar(4),存入3个字符将占用4个字节。 
+
+
+3.char类型的字符串检索速度要比varchar类型的快。
+varchar和text： 
+
+1.varchar可指定n，text不能指定，内部存储varchar是存入的实际字符数+1个字节（n<=255）或2个字节(n>255)，text是实际字符数+2个字
+
+节。 
+
+2.text类型不能有默认值。 
+
+3.varchar可直接创建索引，text创建索引要指定前多少个字符。varchar查询速度快于text,在都创建索引的情况下，text的索引似乎不起作用。
+
+ 
+
+5.二进制数据(_Blob)
+
+1._BLOB和_text存储方式不同，_TEXT以文本方式存储，英文存储区分大小写，而_Blob是以二进制方式存储，不分大小写。
+
+2._BLOB存储的数据只能整体读出。 
+
+3._TEXT可以指定字符集，_BLO不用指定字符集。
+
+
+6.日期时间类型
+
+MySQL数据类型	含义
+date	日期 '2008-12-2'
+time	时间 '12:25:36'
+datetime	日期时间 '2008-12-2 22:06:44'
+timestamp	自动存储记录修改时间
+若定义一个字段为timestamp，这个字段里的时间数据会随其他字段修改的时候自动刷新，所以这个数据类型的字段可以存放这条记录最后被修改的时间。
+
+MySQL关键字	含义
+NULL	数据列可包含NULL值
+NOT NULL	数据列不允许包含NULL值
+DEFAULT	默认值
+PRIMARY KEY	主键
+AUTO_INCREMENT	自动递增，适用于整数类型
+UNSIGNED	无符号
+CHARACTER SET name	指定一个字符集
+ 
+
+二、MYSQL数据类型的长度和范围
+各数据类型及字节长度一览表：
+
+数据类型	字节长度	范围或用法
+Bit	1	无符号[0,255]，有符号[-128,127]，天缘博客备注：BIT和BOOL布尔型都占用1字节
+TinyInt	1	整数[0,255]
+SmallInt	2	无符号[0,65535]，有符号[-32768,32767]
+MediumInt	3	无符号[0,2^24-1]，有符号[-2^23,2^23-1]]
+Int	4	无符号[0,2^32-1]，有符号[-2^31,2^31-1]
+BigInt	8	无符号[0,2^64-1]，有符号[-2^63 ,2^63 -1]
+Float(M,D)	4	单精度浮点数。天缘博客提醒这里的D是精度，如果D<=24则为默认的FLOAT，如果D>24则会自动被转换为DOUBLE型。
+Double(M,D)	8	 双精度浮点。
+Decimal(M,D)	M+1或M+2	未打包的浮点数，用法类似于FLOAT和DOUBLE，天缘博客提醒您如果在ASP中使用到Decimal数据类型，直接从数据库读出来的Decimal可能需要先转换成Float或Double类型后再进行运算。
+Date	3	以YYYY-MM-DD的格式显示，比如：2009-07-19
+Date Time	8	以YYYY-MM-DD HH:MM:SS的格式显示，比如：2009-07-19 11：22：30
+TimeStamp	4	以YYYY-MM-DD的格式显示，比如：2009-07-19
+Time	3	以HH:MM:SS的格式显示。比如：11：22：30
+Year	1	以YYYY的格式显示。比如：2009
+Char(M)	M	
+定长字符串。
+VarChar(M)	M	变长字符串，要求M<=255
+Binary(M)	M	类似Char的二进制存储，特点是插入定长不足补0
+VarBinary(M)	M	类似VarChar的变长二进制存储，特点是定长不补0
+Tiny Text	Max:255	大小写不敏感
+Text	Max:64K	大小写不敏感
+Medium Text	Max:16M	大小写不敏感
+Long Text	Max:4G	大小写不敏感
+TinyBlob	Max:255	大小写敏感
+Blob	Max:64K	大小写敏感
+MediumBlob	Max:16M	大小写敏感
+LongBlob	Max:4G	大小写敏感
+Enum	1或2	最大可达65535个不同的枚举值
+Set	可达8	最大可达64个不同的值
+  	 
+三、使用建议
+1、在指定数据类型的时候一般是采用从小原则，比如能用TINY INT的最好就不用INT，能用FLOAT类型的就不用DOUBLE类型，这样会对MYSQL在运行效率上提高很大，尤其是大数据量测试条件下。
+
+2、不需要把数据表设计的太过复杂，功能模块上区分或许对于后期的维护更为方便，慎重出现大杂烩数据表
+
+3、数据表和字段的起名字也是一门学问
+
+4、设计数据表结构之前请先想象一下是你的房间，或许结果会更加合理、高效
+
+5、数据库的最后设计结果一定是效率和可扩展性的折中，偏向任何一方都是欠妥的
+
+
+
+
+
+---------------------------------------------------------
+                      SSM 和Spingboot
+
+环境框架搭配准备
+
+JDK   环境搭配
+
+Maven 环境搭配
+
+Mysql  
+
+Tomcat
+
+Navicat
+
+Eclipse   ---IDE
+
+Myeclipse  ---IDE
+
+STS   ---IDE
+
+SSM 框架搭配
+
+SpringBoot掌握+Mybatis结合
+
+------------------------------------------------------
+
+                  020商城项目总体流程
+
+1:我们选择好环境后 
+
+2:我们对环境进行搭配
+
+首先用eclipse创建一个maven项目  
+
+然后我们对项目进行   命名和选择  然后我们选择网络项web  1.0
+
+然后会出现一个错误，我们对错误进行修复 是因为tomcat服务器没有添加   添加就好 本机是7.0版本的
+
+3:<!-- 我们需要在pom.xml 添加创建一个插件环境 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.0</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF8</encoding>
+				</configuration>
+			</plugin>
+
+
+4:我们需要在主项目里的添加一个src
+
+名字为  src/test/resources  然后我需要在source的路径里修改一下
+让它和其它三个包的路径一样
+
+
+5:我们在项目下面可以查看这个动态的选择具体情况
+
+project Facets 里面可以具体看到
+
+
+6:但是它支持的是最低级别的2.3级别  就是javajdk1.3以上的，
+如果我们想要更高级别和功能更多一些的就需要另类的办法来解决它
+
+D:\Music\javaSE-WorkSpace\o2oTest 我们查看一下项目具体路径如下
+
+
+在项目里的settings，文件org.eclipse.wst.common.project.facet.core
+
+把2.3  改成3.1版本的就OK了，然后刷新一个我们的eclipse
+
+7: 因为我们改变了约束版本，所以必须在main 下面的WEB-INF文件里
+
+修改一下我们的web.xml文件  因为原先的版本的是2.3的
+
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+		 http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	version="3.1">
+
+	<display-name>Archetype Created Web Application</display-name>
+</web-app>
+
+
+8:初始配置我们已经做好了，我们已经可以工程了哦
+
+tomcat出现异常解决了
+参考办法1：
+在Eclipse的Run -> Run Configurations的界面里 有一个设置参数里Arguments页面里的VM arguments的参数里面把最后的有-Djava.endorsed.dirs="D:\java\tomcat\apache-tomcat-9.0.10\endorsed"的参数删除，然后点击Apply，再点Run就行了。（不过我的出现一个问题，就是每次运行之后都要删除，因为这些个数据会自动还原到VM arguments中，也是很让人头疼的。）
+
+9:我们创建一个mybatis文件  Mybatis-config.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+
+	<!--配置全局属性 -->
+
+	<settings>
+
+		<!-- 使用jdbc的getGeneratedKeys获取数据库的自增主键值 -->
+		<setting name="useGeneratedKeys" value="true" />
+		<!-- -使用列标签替换列名 默认true -->
+		<setting name="useColumnLabel" value="true" />
+		<!-- 开启驼峰命名转换:Taleb(create_time) > Entity(createTime) -->
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+	</settings>
+
+
+</configuration>
+
+
+10.然后我们创建一个Spring文件  spring-dao.xml
+
+在里面进行一些配置工作
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd ">
+
+	<!-- 配置整合mybatis过程 -->
+	<!-- 1.配数据库相关的参数properties的属性 ${} -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+	<!-- 2.数据库连接池 -->
+	<bean id=" dataSource" class="com.mchang3.v2.c3p0.CombopooledDataSource">
+
+		<!-- 配置链接池属性 -->
+		<property name="driverClass" value="${jdbc.driver}"></property>
+		<property name="jdbcUrl" value="${jdbc.url}"></property>
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+
+
+		<!-- 3.c3p0链接池的私有属性 -->
+		<property name="maxPoolSize" value="30"></property>
+
+		<property name="minPoolSize" value="10"></property>
+
+		<!--4.关闭链接后不自动commit -->
+		<property name="autoCommitOnClose" value="false"></property>
+		<!-- 5.获取链接超时间 -->
+		<property name="checkoutTimeout" value="10000"></property>
+		<!-- 6.获取链接失败重试次数 -->
+
+		<property name="acquireRetryAttempts" value="2"></property>
+
+	</bean>
+
+	<!-- 7.配置sqlSessionFantory对象 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+
+		<!-- 8.注入数据库链接池 -->
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 9.配置mybatis全局配置文件mybatis-config.xml -->
+		<property name="configLocation" value="classpath:Mybatis-config.xml"></property>
+		<!-- 10.扫描entity包 使用别名 -->
+		<property name="typeAliasesPackage" value="com.o2o.entity"></property>
+		<!-- 11.扫描sql配置文件 mapper 需要的xml文件 -->
+		<property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+
+	</bean>
+
+	<!-- 12.配置扫描dao接口包，动态实现dao接口，注入到spring 容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 13.注入sqlsessionFactory -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+
+		<!-- 14.给出需要扫描的dao接口包 相关dao的接口 -->
+		<property name="basePackage" value="com.o2o.dao"></property>
+
+	</bean>
+
+
+
+</beans>
+
+11.在spring下  继续创建一个spring-service.xml
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd ">
+
+	<!-- 1.扫描service包下所有使用注解的类型 -->
+
+	<context:component-scan base-package="com.o2o.serviceImpl"></context:component-scan>
+
+	<!-- 2.配置事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+
+		<!-- 3.注入数据库连接池 -->
+		<property name="dataSource" ref="dataSource"></property>
+
+	</bean>
+
+	<!-- 4.配置基于注解的声明式事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+</beans>
+
+12.在spring下  继续创建spring-web.xml  用来控制web层SpringMVC
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd ">
+
+	<!--1.配置SpringMVC 并开启SpringMVC注解模式 -->
+	<mvc:annotation-driven></mvc:annotation-driven>
+
+	<!-- 2.1静态资源默认servlet配置 A: 加入对静态资源的处理 js gif png B: 允许使用 "/" 做整体映射 -->
+	<mvc:resources location="/resources/" mapping="/resources/**"></mvc:resources>
+	<!-- 2.2静态资源统一交由这个默认的servlet去处理 -->
+	<mvc:default-servlet-handler />
+
+
+	<!-- 3.定义视图解析器 -->
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+
+		<!-- 4.给视图前后缀属性 -->
+		<property name="prefix" value="/WEB-INF/html"></property>
+		<property name="suffix" value=".html"></property>
+	</bean>
+
+	<!-- 5.扫描web相关的类 -->
+	<context:component-scan base-package="com.o2o.web"></context:component-scan>
+
+</beans>
+
+13. 在web.xml 里整合下文件和做个匹配规则
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+	<display-name>Archetype Created Web Application</display-name>
+
+	<!-- 我们设置一下默认页面 -->
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>index.xml</welcome-file>
+	</welcome-file-list>
+
+	<!-- 我们需要整合下我们的配置 spring/spring-*.xml -->
+	<servlet>
+		<servlet-name>spring-dispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contestConfigLocation</param-name>
+			<param-value>classpath:spring/spring-*.xml</param-value>
+		</init-param>
+	</servlet>
+
+	<!-- 给个mapping -->
+	<servlet-mapping>
+		<servlet-name>spring-dispatcher</servlet-name>
+		<!--指定匹配规则,默认匹配所有的请求 -->
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+
+</web-app>
+
+14.我们搭建好了框架 需要拿个东西开刀测试下我们的框架 
+
+我们就拿实体类下面Area 开刀好了，在dao里创建一个接口 
+
+先写我们的增删改查等功能
+
+然后在resources/mapper  文件下创建--因为我们使用了框架所以不用
+
+完成接口方法
+
+AreaDao.xml  
+
+15.测试一下  我们的接口方法和这个实体类与表的对应
+
+<?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 创建命名空间 接口全路径 -->
+<mapper namespace="com.o2o.dao.AreaDao">
+
+	<!-- 2.给一个子标签 查询    下面是sql语句语法-->
+	<select id="queryArea" resultType="com.o2o.entity.Area">
+
+		SELECT area_id,area_name,priority,create_time,lastEdit_time
+
+		FROM tb_area
+
+		ORDER BY priority DESC
+	</select>
+
+</mapper>
+
+16.在src/test/java 测试类下创建com.o2o   com.o2o.dao
+
+用maven 进行各种jar包的引入然后搭建并测试
+
+
+package com.o2o;
+
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+/**
+ * 
+ * 用来初始化我们的Spring配置文件
+ * 
+ * spring和junit整合,加载springIOC容器
+ * 
+ * @author Administrator
+ *
+ */
+
+@RunWith(SpringJUnit4ClassRunner.class)
+// 告诉junit spring配置文件的位置
+@ContextConfiguration({ "classpath:spring/spring-dao.xml" })
+public class BaseTest {
+
+
+}
+
+17：我们需要很多jar包，用maven下载就好
+
+缺少的c3p0直接扔pom.xml里maven会帮我们自动下载
+
+	<dependency>
+	    <groupId>com.mchange</groupId>
+	    <artifactId>c3p0</artifactId>
+	    <version>0.9.5.2</version>
+	</dependency>	
+
+
+
+
+18：因为maven里却别mybatis依赖关系，我们还需要加入
+
+
+		<!-- 加入依赖关系Mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.2.8</version>
+		</dependency>
+
+
+
+19:在test/java里创建com.o2o 两个类并测试
+
+package com.o2o;
+
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+/**
+ * 
+ * 用来初始化我们的Spring配置文件
+ * 
+ * spring和junit整合,加载springIOC容器
+ * 
+ * @author Administrator
+ *
+ */
+
+@RunWith(SpringJUnit4ClassRunner.class)
+// 告诉junit spring配置文件的位置
+@ContextConfiguration(locations = { "classpath:spring-*.xml"})
+public class BaseTest {
+
+}
+
+package com.o2o.dao;
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.o2o.BaseTest;
+import com.o2o.dao.AreaDao;
+import com.o2o.entity.Area;
+
+//继承basetest
+public class AreaTest extends BaseTest {
+
+	// 引入AreaDao
+	@Autowired
+	private AreaDao areaDao;
+
+	// 测试这个方法
+	@Test
+	public void testQueryArea() {
+
+		List<Area> areaList = areaDao.queryArea();
+		// 数据库我们创建了2条数据 所以判断是否为2条
+		assertEquals(2, areaList.size());
+	}
+}
+
+
+20:在service包里创建AreaSerice类并实现接口 
+
+AreaServiceImpl  重写方法
+
+@Service
+public class AreaServiceImpl implements AreaService {
+
+	// 自动实现
+	@Autowired
+	private AreaDao areaDao;
+
+	@Override
+	public List<Area> getAreaList() {
+
+		return areaDao.queryArea();
+	}
+
+}
+
+21:在测试包里的创建一个类AreaServiceTest
+
+
+package com.o2o.service;
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.o2o.BaseTest;
+import com.o2o.entity.Area;
+
+public class AreaServiceTest extends BaseTest {
+
+	@Autowired
+	private AreaService areaService;
+
+	@Test
+	public void testGetAreaList() {
+
+		List<Area> areaList = areaService.getAreaList();
+
+		// 简单测试
+		assertEquals("krystal星盟", areaList.get(0).getAreaName());
+	}
+
+}
+
+22:在com.o2o.web 下面创建一个管理员类
+
+package com.o2o.web;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.o2o.entity.Area;
+import com.o2o.service.AreaService;
+
+//给它两个标签
+@Controller
+@RequestMapping("/web")
+public class AreaController {
+
+	@Autowired
+	private AreaService areaService;
+
+	@RequestMapping(value = "/listarea", method = RequestMethod.GET)
+	@ResponseBody
+	private Map<String, Object> listArea() {
+
+		Map<String, Object> modelMap = new HashMap<String, Object>();
+
+		List<Area> list = new ArrayList<Area>();
+
+		// 这里需要捕捉一下错误
+		try {
+
+			list = areaService.getAreaList();
+			modelMap.put("rows", list);
+			modelMap.put("kows", list.size());
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			modelMap.put("success", false);
+			modelMap.put("errMsg", e.toString());
+		}
+
+		return modelMap;
+	}
+}
+
+23： 上面的几个测试和问题 SSM总结
+
+核心知识要点
+
+Sping MVC   :  DispatcherServlet 
+
+了解下调用步骤
+
+Sping  IOC  和 AOP
+
+Spring 是老大  整个Mybatis 和SpringMVC
+
+增删改查需要做一些权限验证,AOP可以实现动态代理
+
+MyBatis: 重点就是ORM 
+
+24:日志非常重要--主要了解程序运行的情况和查看BUG
+
+Logback-access  主要模块
+
+Logback-classic 是Log4j的改良版
+
+Logback-core  为前两个提供了基础服务
+
+记住几个常用标签
+
+logger
+
+appender  ----用于指定日志输出的媒介
+
+layout    ----格式化日志用
+
+我们首先创建一个日志配置 这个日志配置用xml文件配置即可
+
+loback.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 这是配置业务日志的配置 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+	<!-- 定义参数常量 -->
+
+	<!-- 日志的级别 TRACE <DEBUG<INFO<WARN<ERROR logger.debug("message")-项目通常用DEBUG和INFO -->
+	<property name="log.level" value="debug" />
+	<!-- 配置这个文件要保留多长时间 -->
+	<property name="log.maxHistory" value="30" />
+	<!-- 第三个变量值表示 日志存储的跟目录 -->
+	<property name="log.filePath" value="${catalina.base/logs}" />
+
+	<!-- 第四个定义日志展现的格式 [表示线程] %-5level 表示哪个级别的日志 %logger{50} 哪个类哪个级别的信息 %msg%n 
+		换行 -->
+	<property name="log.pattern"
+		value="%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread] %-5level %logger{50} - %msg%n" />
+	<!-- 控制台设置 -->
+	<appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<!-- 定义日志输出格式 -->
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	<!-- DEBUG -->
+	<aapender name="debugAppender"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 文件路径 -->
+		<file>${log.filePath}/debug.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- 文件名称 -->
+			<fileNamePattern>${log.filePath}/debug/debug.%d{yyyy-MM-dd}.log.gz
+			</fileNamePattern>
+			<!-- 文件最大保存历史数量 只保留30天 -->
+			<maxHistory>${log.maxHistory}</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<!-- 定义日志输出格式 -->
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		<!-- 这是用来过滤的配置 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>DEBUG</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</aapender>
+	<!-- INFO -->
+	<aapender name="infoAppender"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 文件路径 -->
+		<file>${log.filePath}/debug.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- 文件名称 -->
+			<fileNamePattern>${log.filePath}/info/info.%d{yyyy-MM-dd}.log.gz
+			</fileNamePattern>
+			<!-- 文件最大保存历史数量 -->
+			<maxHistory>${log.maxHistory}</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<!-- 定义日志输出格式 -->
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		<!-- 这是用来过滤的配置 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</aapender>
+
+	<!--ERROR -->
+	<aapender name="errorAppender"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 文件路径 -->
+		<file>${log.filePath}/debug.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- 文件名称 -->
+			<fileNamePattern>${log.filePath}/error/error.%d{yyyy-MM-dd}.log.gz
+			</fileNamePattern>
+			<!-- 文件最大保存历史数量 -->
+			<maxHistory>${log.maxHistory}</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<!-- 定义日志输出格式 -->
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		<!-- 这是用来过滤的配置 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</aapender>
+
+	<!-- 最后一个配置 logger 然后绑定我们设定的三个appender  和我们的工程项目链接起来 -->
+	<logger name="com.o2o" level="${log.level}" additivity="true">
+		<appder-ref ref="debugAppender"></appder-ref>
+		<appder-ref ref="infoAppender"></appder-ref>
+		<appder-ref ref="errorAppender"></appder-ref>
+	</logger>
+	<!-- 这是备用 上面的如果没有记录 就记录这个 -->
+	<root level="info">
+		<!-- 给一个路径 控制台 -->
+		<appender-ref ref="consoleAppender"></appender-ref>
+	</root>
+
+</configuration>
+
+25:我们在ＡreanControl类里测试一下
+
+// 在这里测试logger
+
+// 创建logger
+	Logger logger = (Logger) LoggerFactory.getLogger(AreaController.class);
+
+logger.info("====start====");
+
+        {       中间用来测试程序        }
+
+
+		logger.error("test");
+		// 结尾也需要给一个
+		logger.info("=====end=====");
+		long endTime = System.currentTimeMillis();
+		// 结束减去开始的时间 会传入这个[{}] 里面
+		logger.debug("costTime:[{}ms]", endTime - startTime);
+
+26:优先级项目 
+
+店家管理系统 --- 前端展示系统 ---管理员系统
+
+优先实现店铺的增删改查
+
+掌握目标-----------------------------------------------
+
+数据库的链接的
+
+Mybatis数据库表映射关系的配置
+
+dao--serivce--controller 层代码的编码的，Junit的使用
+
+Session,图片处理工具Thumbnailator的使用
+
+suimobile前端的设计和开发
+
+框架的数据库并不需要死记硬背，需要注意仅仅是那些拥有不会改变的东西的
+
+比如数据库的
+<!-- 配置链接池属性  等等 我们需要的功能网上都有-->
+		<property name="driverClass" value="${jdbc.driver}"></property>
+		<property name="jdbcUrl" value="${jdbc.url}"></property>
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+
+
+		<!-- 3.c3p0链接池的私有属性 -->
+		<property name="maxPoolSize" value="30"></property>
+
+		<property name="minPoolSize" value="10"></property>
+
+
+27:我们在dao层创建一个shopdao接口
+
+package com.o2o.dao;
+
+import com.o2o.entity.Shop;
+
+public interface ShopDao {
+   
+/**
+ * 新增店铺
+ * 
+ * 返回-1就是失败
+ * 
+ * 
+ */
+   int insertShop(Shop shop);
+	
+}
+
+  并测试====================
+
+
+package com.o2o.dao;
+
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.o2o.BaseTest;
+import com.o2o.entity.Area;
+import com.o2o.entity.PersonInfo;
+import com.o2o.entity.Shop;
+import com.o2o.entity.ShopCategory;
+
+import jdk.nashorn.internal.ir.annotations.Ignore;
+
+public class ShopDaoTest extends BaseTest {
+
+	@Autowired
+	private ShopDao shopDao;
+
+	@Test
+	// 如果不想注释它 需要增加一个不扫描它的标签
+	@Ignore
+	public void testInsertShop() {
+
+		Shop shop = new Shop();
+		PersonInfo owner = new PersonInfo();
+		Area area = new Area();
+		ShopCategory shopCategory = new ShopCategory();
+
+		// 然后设置所有信息和描述
+
+		int effdctedNum = shopDao.insertShop(shop);
+
+		assertEquals(1, effdctedNum);
+	}
+
+	// 这是更新测试
+	@Test
+	public void testUpdateShop() {
+
+		Shop shop = new Shop();
+
+		// 然后设置属性
+
+		int effdctedNum = shopDao.updateShop(shop);
+
+		assertEquals(1, effdctedNum);
+
+	}
+}
+
+28: 添加图片处理功能的jar 在pom.xml里
+
+		<!-- 图片处理 -->
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.8</version>
+		</dependency>
+
+
+然后在项目的工具包里封装一下它 ImageUtil
+
+
+package com.o2o.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+
+import javax.imageio.ImageIO;
+
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
+
+/**
+ * 
+ * 封装一下图片处理Thumbnails
+ * 
+ * @author Administrator
+ *
+ */
+
+public class ImageUtil {
+
+	// 给一个特有变量
+	private static String basePath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+
+	// 给一个时间变量
+	private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
+	// 随机数对象
+	private static final Random r = new Random();
+
+	public static void main(String[] args) throws IOException {
+
+		// 获取classpath 绝对路径 因为水印图片在这里
+		String basePath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+
+		Thumbnails.of(new File("water/js.jpg")).size(400, 400)
+				.watermark(Positions.BOTTOM_RIGHT, ImageIO.read(new File(basePath + "D:/js.jpg")), 0.3f)
+				.outputQuality(0.8).toFile("water/jesss.jpg");
+
+	}
+
+	// 基础方法一
+
+	public static void generateThumbnail(CommonsMultipartFile thumbnail, String targetAddress) {
+
+		String realFileName = getRandomFileName();
+
+		String extension = getFileExtension(thumbnail);
+
+		makeDirPath(targetAddress);
+
+		// 新的扩展名字的
+		String relativeAddr = targetAddress + realFileName + extension;
+
+		// 新的路径
+		File dest = new File(PathUtil.getImgBasePath() + relativeAddr);
+
+		try {
+			Thumbnails.of(thumbnail.getInputStream()).size(400, 400)
+					.watermark(Positions.CENTER_RIGHT, ImageIO.read(new File(basePath + "/js.jpg")), 0.25f)
+					.outputQuality(0.8f).toFile(dest);
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 
+	 * 生存随机文件名，当前年月日小时分钟秒
+	 */
+	private static String getRandomFileName() {
+
+		// 获取随机的五位数
+		int sum = r.nextInt(89999) + 10000;
+		String nowTimeStr = sDateFormat.format(new Date());
+		return nowTimeStr + sum;
+	}
+
+	/**
+	 * 获取输出文件流的扩展名
+	 * 
+	 */
+	private static String getFileExtension(CommonsMultipartFile cFile) {
+
+		String originalFileName = cFile.getOriginalFilename();
+
+		return originalFileName.substring(originalFileName.lastIndexOf("."));
+	}
+
+	/**
+	 * 创建目标路径所涉及的目标
+	 * 
+	 * 
+	 */
+	private static void makeDirPath(String targetAddress) {
+
+		// 目标的全路径
+		String realFileParentPath = PathUtil.getImgBasePath() + targetAddress;
+
+		File dirPath = new File(realFileParentPath);
+
+		// 判断这个路径是否存在
+		if (!dirPath.exists()) {
+
+			dirPath.mkdirs();
+		}
+
+	}
+}
+
+29:创建一个枚举类
+
+package com.o2o.enums;
+
+//枚举类
+public enum ShopStateEnum {
+
+	ChECK(0, "审核中"), OFFLINE(-1, "非法店铺"), SUCCESS(1, "操作成功"), PASS(2, "通过验证"), ERROR(-1001, "内部系统错误"),
+
+	NULL_SHOPID(-1002, "shopId为空"),
+	NULL_SHOP(-1003,"shop信息为空");
+	// 给一些私有的成员变量
+	private int state;
+
+	private String stateInfo;
+
+	private ShopStateEnum(int state, String stateInfo) {
+
+		this.state = state;
+		this.stateInfo = stateInfo;
+	}
+
+	// 依据传入的state返回响应的enum值
+
+	public static ShopStateEnum stateOf(int state) {
+
+		for (ShopStateEnum stateEnum : values()) {
+
+			if (stateEnum.getState() == state) {
+
+				return stateEnum;
+			}
+
+		}
+		return null;
+
+	}
+
+	public int getState() {
+		return state;
+	}
+
+	public String getStateInfo() {
+		return stateInfo;
+	}
+
+}
+
+30: 然后进入主线 对shop进行service操作的业务层
+
+
+package com.o2o.serviceimpl;
+
+import java.io.File;
+
+import com.o2o.dto.ShopExecution;
+import com.o2o.entity.Shop;
+
+public interface ShopService {
+
+	ShopExecution addShop(Shop shop, File shopImg);
+}
+
+
+31: 我们需要有事物的支持
+
+@Transactional 这个标签标示增加对事物的支持
+
+package com.o2o.service;
+
+import java.io.File;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.o2o.dao.ShopDao;
+import com.o2o.dto.ShopExecution;
+import com.o2o.entity.Shop;
+import com.o2o.enums.ShopStateEnum;
+import com.o2o.serviceimpl.ShopService;
+import com.o2o.util.ImageUtil;
+import com.o2o.util.PathUtil;
+
+public class ShopServiceImpl implements ShopService {
+
+	/**
+	 * 实现接口方法
+	 * 
+	 * 
+	 */
+
+	// 注入一个成员变量
+	@Autowired
+	private ShopDao shopDao;
+
+	@SuppressWarnings("null")
+	@Override
+	// 这是开启对事务支持的类
+	// @Transactional
+	public ShopExecution addShop(Shop shop, File shopImg) {
+
+		// 检查shop 是否为空 还可以添加几个非空判断
+		if (shop != null) {
+
+			// 给一个返回字段
+			return new ShopExecution(ShopStateEnum.NULL_SHOP);
+
+		}
+		try {
+			// 给店铺信息赋初始化值
+			shop.setEnableStatus(0);
+			shop.setCreateTime(new Date());
+			shop.setLastEditTime(new Date());
+
+			// 添加店铺信息
+			int effectedNum = shopDao.insertShop(shop);
+
+			if (effectedNum <= 0) {
+
+				// 添加失败抛出异常
+				throw new RuntimeException("店铺创建失败");
+			} else {
+
+				// 添加成功后的代码
+				if (shopImg != null) {
+
+					// 存储图片
+					try {
+						addShopImg(shop, shopImg);
+					} catch (Exception e) {
+						throw new RuntimeException("addshopImg error" + e.getMessage());
+					}
+
+					// 更新店铺的图片地址
+					effectedNum = shopDao.updateShop(shop);
+					if (effectedNum <= 0) {
+						throw new RuntimeException("更新图片地址失败");
+
+					}
+				}
+			}
+
+		} catch (Exception e) {
+
+			throw new RuntimeException("addShop error" + e.getMessage());
+		}
+
+		return new ShopExecution(ShopStateEnum.ChECK, shop);
+	}
+
+	private void addShopImg(Shop shop, File shopImg) {
+
+		// 获取shop图片相对值路径
+		String dest = PathUtil.getShopImagePath(shop.getShopId());
+
+		String shopImgAddr = ImageUtil.generateThumbnail(shopImg, dest);
+		// 更改字段并返回来使用
+		shop.setShopImg(shopImgAddr);
+	}
+
+}
+
+32.我们来测试一下的
+
+package com.o2o.dao;
+
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.o2o.BaseTest;
+import com.o2o.dto.ShopExecution;
+import com.o2o.entity.Area;
+import com.o2o.entity.PersonInfo;
+import com.o2o.entity.Shop;
+import com.o2o.entity.ShopCategory;
+import com.o2o.enums.ShopStateEnum;
+import com.o2o.serviceimpl.ShopService;
+
+//这里需要标注一下  @Service  好让spring扫描到
+public class ShopServiceTest extends BaseTest {
+
+	@Autowired
+	private ShopService shopService;
+
+	@Test
+	public void testAddShop() {
+
+		Shop shop = new Shop();
+		PersonInfo owner = new PersonInfo();
+		Area area = new Area();
+		ShopCategory shopCategory = new ShopCategory();
+
+		// 然后设置所有信息和描述
+
+		File shopImg = new File("D:/water/js.jpg");
+
+		// 对它进行添加
+		ShopExecution se = shopService.addShop(shop, shopImg);
+
+		// 测试验证
+		assertEquals(ShopStateEnum.ChECK.getState(), se.getState());
+	}
+}
+
+RunTimeException 可以对异常进行数据库回滚
+
+33.接下来我们创建一个商品管理类ShopManageController
+
+
+不过我们需要先做一个工具类HttpServletRequestUtil
+
+package com.o2o.util;
+
+import javax.servlet.http.HttpServletRequest;
+
+public class HttpServletRequestUtil {
+
+	// 这是一个int类型的
+	public static int getInt(HttpServletRequest request, String key) {
+
+		try {
+
+			return Integer.decode(request.getParameter(key));
+		} catch (Exception e) {
+
+			// 如果转换失败 就返回-1
+			return -1;
+		}
+
+	}
+
+	// 这是一个长整数类型的
+	public static long getLong(HttpServletRequest request, String key) {
+
+		try {
+
+			return Long.valueOf(request.getParameter(key));
+		} catch (Exception e) {
+
+			// 如果转换失败 就返回-1
+			return -1;
+		}
+
+	}
+
+	public static Double getDouble(HttpServletRequest request, String key) {
+
+		try {
+
+			return Double.valueOf(request.getParameter(key));
+		} catch (Exception e) {
+
+			// 如果转换失败 就返回-1d
+			return -1d;
+		}
+
+	}
+
+	public static boolean getBoolean(HttpServletRequest request, String key) {
+
+		try {
+
+			return Boolean.valueOf(request.getParameter(key));
+		} catch (Exception e) {
+
+			return false;
+		}
+
+	}
+
+	public static String getString(HttpServletRequest request, String key) {
+
+		try {
+
+			String result = request.getParameter(key);
+			// 这里需要增加几个判断 防止出现异常
+			if (result != null) {
+
+				result = result.trim();
+			}
+
+			if ("".equals(result)) {
+
+				result = null;
+			}
+
+			return result;
+		} catch (Exception e) {
+
+			return null;
+		}
+
+	}
+
+}
+
+34.在系统操作xml里添加一个可以转换jackson的jar包 core
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+35.前端大神我不是，所以没办法了,因为我是后端大神，所以只能简单利用一下前端的好工具
+
+SUL Mobile----这是一款 轻量、小巧且精美的UI库,方便迅速搭建手机H5风格----ios风格
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+36.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
